@@ -1,7 +1,10 @@
 import io
+import os
+import tempfile
 import unittest
+from unittest.mock import patch
 
-from Receiver_nod import process_stream
+from Receiver_nod import main, process_stream
 
 
 class ReceiverNodTests(unittest.TestCase):
@@ -90,6 +93,36 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("Zeile 3: Felder müssen numerisch sein: pressure.", error_output)
         self.assertIn("empfangene Daten: pressure=13, temp=23", out.getvalue())
         self.assertFalse(success)
+
+    def test_main_returns_error_code_for_invalid_stdin_input(self):
+        fake_stdin = io.StringIO('{"pressure": 1, "temp": 2}\n{bad json}\n')
+        fake_stdout = io.StringIO()
+        fake_stderr = io.StringIO()
+
+        with patch("sys.stdin", fake_stdin), patch("sys.stdout", fake_stdout), patch("sys.stderr", fake_stderr):
+            exit_code = main([])
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("empfangene Daten: pressure=1, temp=2", fake_stdout.getvalue())
+        self.assertIn("Ungültiges JSON", fake_stderr.getvalue())
+
+    def test_main_reads_optional_file_argument(self):
+        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp_file:
+            tmp_file.write('{"pressure": 1001, "temp": 21}\nEND\n')
+            tmp_path = tmp_file.name
+
+        fake_stdout = io.StringIO()
+        fake_stderr = io.StringIO()
+        try:
+            with patch("sys.stdout", fake_stdout), patch("sys.stderr", fake_stderr):
+                exit_code = main(["--file", tmp_path])
+        finally:
+            os.unlink(tmp_path)
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("empfangene Daten: pressure=1001, temp=21", fake_stdout.getvalue())
+        self.assertIn("Abschlusszeile 'END'", fake_stdout.getvalue())
+        self.assertEqual("", fake_stderr.getvalue())
 
 
 if __name__ == "__main__":
