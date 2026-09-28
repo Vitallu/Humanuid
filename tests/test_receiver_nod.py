@@ -1,5 +1,4 @@
 import io
-import os
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -107,17 +106,15 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("Ungültiges JSON", fake_stderr.getvalue())
 
     def test_main_reads_optional_file_argument(self):
-        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp_file:
-            tmp_file.write('{"pressure": 1001, "temp": 21}\nEND\n')
-            tmp_path = tmp_file.name
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = f"{tmp_dir}/measurements.jsonl"
+            with open(tmp_path, "w", encoding="utf-8") as tmp_file:
+                tmp_file.write('{"pressure": 1001, "temp": 21}\nEND\n')
 
-        fake_stdout = io.StringIO()
-        fake_stderr = io.StringIO()
-        try:
+            fake_stdout = io.StringIO()
+            fake_stderr = io.StringIO()
             with patch("sys.stdout", fake_stdout), patch("sys.stderr", fake_stderr):
                 exit_code = main(["--file", tmp_path])
-        finally:
-            os.unlink(tmp_path)
 
         self.assertEqual(0, exit_code)
         self.assertIn("empfangene Daten: pressure=1001, temp=21", fake_stdout.getvalue())
@@ -125,9 +122,9 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertEqual("", fake_stderr.getvalue())
 
     def test_main_returns_error_for_empty_input(self):
-        fake_stdin = io.StringIO("")
         fake_stdout = io.StringIO()
         fake_stderr = io.StringIO()
+        fake_stdin = io.StringIO("")
 
         with patch("sys.stdin", fake_stdin), patch("sys.stdout", fake_stdout), patch("sys.stderr", fake_stderr):
             exit_code = main([])
