@@ -9,24 +9,55 @@ class ReceiverNodTests(unittest.TestCase):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream([
-            '{"pressure": 0, "temp": 0}\n',
-            'END\n',
-        ], source_name="stdin", out=out, err=err)
+        process_stream(
+            [
+                '{"pressure": 0, "temp": 0}\n',
+                'END\n',
+            ],
+            source_name="stdin",
+            out=out,
+            err=err,
+        )
 
         self.assertIn("empfangene Daten: pressure=0, temp=0", out.getvalue())
         self.assertIn("Abschlusszeile 'END'", out.getvalue())
+        self.assertEqual("", err.getvalue())
+
+    def test_end_token_stops_following_measurements(self):
+        out = io.StringIO()
+        err = io.StringIO()
+
+        process_stream(
+            [
+                '{"pressure": 10, "temp": 20}\n',
+                'END\n',
+                '{"pressure": 999, "temp": 999}\n',
+            ],
+            source_name="stdin",
+            out=out,
+            err=err,
+        )
+
+        output = out.getvalue()
+        self.assertIn("empfangene Daten: pressure=10, temp=20", output)
+        self.assertIn("Abschlusszeile 'END'", output)
+        self.assertNotIn("pressure=999", output)
         self.assertEqual("", err.getvalue())
 
     def test_reports_invalid_json_and_continues(self):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream([
-            '{"pressure": 10, "temp": 20}\n',
-            '{invalid json}\n',
-            '{"pressure": 11, "temp": 21}\n',
-        ], source_name="stdin", out=out, err=err)
+        process_stream(
+            [
+                '{"pressure": 10, "temp": 20}\n',
+                '{invalid json}\n',
+                '{"pressure": 11, "temp": 21}\n',
+            ],
+            source_name="stdin",
+            out=out,
+            err=err,
+        )
 
         output = out.getvalue()
         self.assertIn("empfangene Daten: pressure=10, temp=20", output)
@@ -38,11 +69,17 @@ class ReceiverNodTests(unittest.TestCase):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream([
-            '{"pressure": 10}\n',
-            '{"pressure": "high", "temp": 20}\n',
-            '{"pressure": 13, "temp": 23}\n',
-        ], source_name="stdin", out=out, err=err)
+        process_stream(
+            [
+                '{"pressure": 10}\n',
+                '{"pressure": "high", "temp": 20}\n',
+                '{"pressure": true, "temp": 20}\n',
+                '{"pressure": 13, "temp": 23}\n',
+            ],
+            source_name="stdin",
+            out=out,
+            err=err,
+        )
 
         error_output = err.getvalue()
         self.assertIn("Fehlende Felder", error_output)

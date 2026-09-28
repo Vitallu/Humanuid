@@ -1,14 +1,17 @@
 import argparse
 import json
 import sys
-from typing import Iterable, Optional, Sequence, TextIO
+from typing import Dict, Iterable, Optional, Sequence, TextIO, Union
+
+Number = Union[int, float]
+Measurement = Dict[str, Number]
 
 
 def _is_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def parse_measurement(line: str, line_number: int) -> dict:
+def parse_measurement(line: str, line_number: int) -> Measurement:
     try:
         data = json.loads(line)
     except json.JSONDecodeError as exc:
