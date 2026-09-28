@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from typing import Iterable, Optional, TextIO
+from typing import Iterable, Optional, Sequence, TextIO
 
 
 def _is_number(value: object) -> bool:
@@ -73,7 +73,7 @@ def process_stream(
     print(f"Eingabe beendet: EOF erreicht ({source_name}).", file=out)
 
 
-def main(argv: Optional[list] = None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Liest Messdaten als JSON-Zeilen von stdin oder optional aus einer Datei. "
