@@ -11,6 +11,14 @@ echo '{"pressure": 1013.2, "temp": 22.8}' | python Receiver_nod.py
 ```
 
 Mehrere Zeilen (interaktiv oder per Pipe) sind möglich.
+Beispiel mit Abschluss über EOF:
+
+```bash
+python Receiver_nod.py <<'EOF'
+{"pressure": 1010, "temp": 21.5}
+{"pressure": 1008, "temp": 21.1}
+EOF
+```
 
 ### 2) Optionale Eingabedatei
 
