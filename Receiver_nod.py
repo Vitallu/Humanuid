@@ -51,6 +51,7 @@ def process_stream(
     end_token: str = "END",
 ) -> bool:
     had_errors = False
+    had_measurement = False
     for line_number, raw_line in enumerate(stream, start=1):
         line = raw_line.strip()
         if not line:
@@ -61,6 +62,9 @@ def process_stream(
                 f"Eingabe beendet: Abschlusszeile '{end_token}' erkannt ({source_name}, Zeile {line_number}).",
                 file=out,
             )
+            if not had_measurement:
+                print("Fehler: Keine gültigen Messdaten verarbeitet.", file=err)
+                return False
             return not had_errors
 
         try:
@@ -74,8 +78,14 @@ def process_stream(
             f"empfangene Daten: pressure={data['pressure']}, temp={data['temp']}",
             file=out,
         )
+        had_measurement = True
 
     print(f"Eingabe beendet: EOF erreicht ({source_name}).", file=out)
+
+    if not had_measurement:
+        print("Fehler: Keine gültigen Messdaten verarbeitet.", file=err)
+        return False
+
     return not had_errors
 
 

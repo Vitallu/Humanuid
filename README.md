@@ -37,3 +37,4 @@ Wichtig: `temp=0` oder `pressure=0` sind **normale Messwerte** und bedeuten **ni
 ### Fehlermeldungen
 
 Bei ungültigem JSON, fehlenden Feldern oder nicht-numerischen Werten gibt das Skript verständliche Fehlermeldungen mit Zeilennummer aus.
+Wenn keine gültige Messung verarbeitet wurde (z. B. leere Eingabe), endet das Skript mit Fehlercode `1`.

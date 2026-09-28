@@ -124,6 +124,18 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("Abschlusszeile 'END'", fake_stdout.getvalue())
         self.assertEqual("", fake_stderr.getvalue())
 
+    def test_main_returns_error_for_empty_input(self):
+        fake_stdin = io.StringIO("")
+        fake_stdout = io.StringIO()
+        fake_stderr = io.StringIO()
+
+        with patch("sys.stdin", fake_stdin), patch("sys.stdout", fake_stdout), patch("sys.stderr", fake_stderr):
+            exit_code = main([])
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("EOF erreicht", fake_stdout.getvalue())
+        self.assertIn("Keine gültigen Messdaten verarbeitet", fake_stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
