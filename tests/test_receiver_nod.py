@@ -9,7 +9,7 @@ class ReceiverNodTests(unittest.TestCase):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream(
+        success = process_stream(
             [
                 '{"pressure": 0, "temp": 0}\n',
                 'END\n',
@@ -22,12 +22,13 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("empfangene Daten: pressure=0, temp=0", out.getvalue())
         self.assertIn("Abschlusszeile 'END'", out.getvalue())
         self.assertEqual("", err.getvalue())
+        self.assertTrue(success)
 
     def test_end_token_stops_following_measurements(self):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream(
+        success = process_stream(
             [
                 '{"pressure": 10, "temp": 20}\n',
                 'END\n',
@@ -43,12 +44,13 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("Abschlusszeile 'END'", output)
         self.assertNotIn("pressure=999", output)
         self.assertEqual("", err.getvalue())
+        self.assertTrue(success)
 
     def test_reports_invalid_json_and_continues(self):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream(
+        success = process_stream(
             [
                 '{"pressure": 10, "temp": 20}\n',
                 '{invalid json}\n',
@@ -64,12 +66,13 @@ class ReceiverNodTests(unittest.TestCase):
         self.assertIn("empfangene Daten: pressure=11, temp=21", output)
         self.assertIn("EOF erreicht", output)
         self.assertIn("Ungültiges JSON", err.getvalue())
+        self.assertFalse(success)
 
     def test_reports_missing_or_invalid_fields(self):
         out = io.StringIO()
         err = io.StringIO()
 
-        process_stream(
+        success = process_stream(
             [
                 '{"pressure": 10}\n',
                 '{"pressure": "high", "temp": 20}\n',
@@ -84,7 +87,9 @@ class ReceiverNodTests(unittest.TestCase):
         error_output = err.getvalue()
         self.assertIn("Fehlende Felder", error_output)
         self.assertIn("müssen numerisch sein", error_output)
+        self.assertIn("Zeile 3: Felder müssen numerisch sein: pressure.", error_output)
         self.assertIn("empfangene Daten: pressure=13, temp=23", out.getvalue())
+        self.assertFalse(success)
 
 
 if __name__ == "__main__":

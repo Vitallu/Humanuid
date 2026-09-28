@@ -30,6 +30,7 @@ END
 
 - Die Schleife endet bei **EOF** (z. B. wenn die Pipe/Datei zu Ende ist), oder
 - bei einer expliziten Abschlusszeile `END`.
+- Die Abschlusszeile wird nach `strip()` geprüft: also beendet auch ` END `, aber nur bei exakter Übereinstimmung mit `END` nach dem Trimmen.
 
 Wichtig: `temp=0` oder `pressure=0` sind **normale Messwerte** und bedeuten **nicht** automatisch Testende.
 

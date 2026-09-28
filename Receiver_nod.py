@@ -49,7 +49,8 @@ def process_stream(
     out: TextIO,
     err: TextIO,
     end_token: str = "END",
-) -> None:
+) -> bool:
+    had_errors = False
     for line_number, raw_line in enumerate(stream, start=1):
         line = raw_line.strip()
         if not line:
@@ -60,12 +61,13 @@ def process_stream(
                 f"Eingabe beendet: Abschlusszeile '{end_token}' erkannt ({source_name}, Zeile {line_number}).",
                 file=out,
             )
-            return
+            return not had_errors
 
         try:
             data = parse_measurement(line, line_number)
         except ValueError as exc:
             print(f"Fehler: {exc}", file=err)
+            had_errors = True
             continue
 
         print(
@@ -74,6 +76,7 @@ def process_stream(
         )
 
     print(f"Eingabe beendet: EOF erreicht ({source_name}).", file=out)
+    return not had_errors
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -93,14 +96,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.file_path:
         try:
             with open(args.file_path, "r", encoding="utf-8") as file_obj:
-                process_stream(file_obj, source_name=args.file_path, out=sys.stdout, err=sys.stderr)
+                success = process_stream(
+                    file_obj,
+                    source_name=args.file_path,
+                    out=sys.stdout,
+                    err=sys.stderr,
+                )
         except OSError as exc:
             print(f"Fehler: Datei kann nicht gelesen werden: {exc}", file=sys.stderr)
             return 1
     else:
-        process_stream(sys.stdin, source_name="stdin", out=sys.stdout, err=sys.stderr)
+        success = process_stream(sys.stdin, source_name="stdin", out=sys.stdout, err=sys.stderr)
 
-    return 0
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
